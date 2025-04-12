@@ -1,15 +1,31 @@
 from django.contrib import admin
-from .models import User, PropertyType, Location, Category, Advertisement, Photo, Review, FavoriteAdvertisement, Notification, Statistics
+from .models import User, PropertyType, Location, Category, Advertisement, Photo, Review, FavoriteAdvertisement, Notification, Statistics, Agency, Agent
 
 # Настройка для модели User
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'surname', 'email', 'is_active', 'is_staff', 'date_joined')
-    list_filter = ('is_active', 'is_staff')
+    list_display = ('name', 'surname', 'email', 'is_active', 'is_staff', 'is_agent', 'date_joined')
+    list_filter = ('is_active', 'is_staff', 'is_agent')
     search_fields = ('name', 'surname', 'email')
     list_display_links = ('name', 'surname')
     readonly_fields = ('date_joined',)
     date_hierarchy = 'date_joined'
+
+# Настройка для модели Agency
+@admin.register(Agency)
+class AgencyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'agent_count', 'advertisement_count')
+    search_fields = ('name',)
+    list_filter = ('created_at',)
+    ordering = ('created_at',)
+
+# Настройка для модели Agent
+@admin.register(Agent)
+class AgentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'agency')
+    search_fields = ('user__email', 'user__name', 'user__surname')
+    list_filter = ('agency',)
+    ordering = ('agency',)
 
 # Настройка для модели PropertyType
 @admin.register(PropertyType)

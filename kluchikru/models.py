@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractBaseUser , BaseUserManager, PermissionsMixin
 
@@ -28,19 +29,54 @@ class User(AbstractBaseUser , PermissionsMixin):
   date_joined = models.DateTimeField(auto_now_add=True, verbose_name='Дата регистрации')
   is_active = models.BooleanField(default=True, verbose_name='Активен')
   is_staff = models.BooleanField(default=False, verbose_name='Сотрудник')
+  is_agent = models.BooleanField(default=False, verbose_name='Агент')
 
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = []
   
   objects = UserManager()
 
+  class Meta:
+        verbose_name = "Пользователь"  
+        verbose_name_plural = "Пользователи"  
+
   def __str__(self):
     return f"{self.name} {self.surname}"
+
+# Модель агенства, которая описывает агенство
+class Agency(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    name = models.CharField(max_length=255, verbose_name='Название')
+    agent_count = models.PositiveIntegerField(default=0, verbose_name='Количество агентов')
+    advertisement_count = models.PositiveIntegerField(default=0, verbose_name='Количество объявлений')
+
+    class Meta:
+        verbose_name = "Агентство"
+        verbose_name_plural = "Агентства"
+
+    def __str__(self):
+        return self.name
+
+# Модель агентов, связывающая агенство и агента
+class Agent(models.Model):
+    agency = models.ForeignKey(Agency, on_delete=models.CASCADE, related_name='agents', verbose_name='Агентство')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь')
+
+    class Meta:
+        verbose_name = "Агент"
+        verbose_name_plural = "Агенты"
+
+    def __str__(self):
+        return f"{self.user.name} {self.user.surname} - {self.agency.name}"
 
 # Модель типа недвижимости, которая описывает различные типы недвижимости
 class PropertyType(models.Model):
   name = models.CharField(max_length=100, verbose_name='Название типа недвижимости')
   description = models.TextField(verbose_name='Описание типа недвижимости')
+
+  class Meta:
+        verbose_name = "Тип недвижимости"  
+        verbose_name_plural = "Типы недвижимости" 
 
   def __str__(self):
     return self.name
@@ -52,6 +88,10 @@ class Location(models.Model):
   street = models.CharField(max_length=150, verbose_name='Улица')
   house = models.CharField(max_length=15, verbose_name='Дом')
 
+  class Meta:
+        verbose_name = "Адрес"  
+        verbose_name_plural = "Адреса" 
+
   def __str__(self):
     return f"{self.city}, {self.district}, {self.street}, {self.house}"
 
@@ -60,6 +100,10 @@ class Category(models.Model):
   name = models.CharField(max_length=100, verbose_name='Название категории недвижимости')
   description = models.TextField(verbose_name='Описание категории недвижимости')
   created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+
+  class Meta:
+        verbose_name = "Категория"  
+        verbose_name_plural = "Категории" 
 
   def __str__(self):
     return self.name
@@ -90,6 +134,10 @@ class Advertisement(models.Model):
     else:
         return f"{self.price:.2f} руб."
 
+  class Meta:
+        verbose_name = "Объявление"  
+        verbose_name_plural = "Объявления" 
+
   def __str__(self):
     return f"{self.title} - {self.formatted_price()}"
 
@@ -98,6 +146,10 @@ class Photo(models.Model):
   advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='photos', verbose_name='Объявление')
   image_url = models.URLField(verbose_name='URL изображения')
   display_order = models.IntegerField(verbose_name='Порядок отображения')
+
+  class Meta:
+        verbose_name = "Фотография"  
+        verbose_name_plural = "Фотографии" 
 
   def __str__(self):
       return f"Фото для объявления: {self.advertisement.title} - Порядок отображения: {self.display_order}"
@@ -114,6 +166,10 @@ class Review(models.Model):
   )
   comment = models.TextField(verbose_name='Комментарий')
 
+  class Meta:
+        verbose_name = "Отзыв"  
+        verbose_name_plural = "Отзывы" 
+
   def __str__(self):
     return f"Отзыв для {self.advertisement.title} от {self.user.name} - Рейтинг: {self.rating}"
 
@@ -121,6 +177,10 @@ class Review(models.Model):
 class FavoriteAdvertisement(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
   advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, verbose_name='Объявление')
+
+  class Meta:
+        verbose_name = "Избранное"  
+        verbose_name_plural = "Избранные" 
 
   def __str__(self):
       return f"Избранное: {self.user.name} - {self.advertisement.title}"
@@ -140,6 +200,10 @@ class Notification(models.Model):
   status = models.CharField(max_length=50, verbose_name='Статус')
   message = models.TextField(verbose_name='Сообщение')
 
+  class Meta:
+        verbose_name = "Уведомление"  
+        verbose_name_plural = "Уведомления" 
+
   def __str__(self):
     return f"Уведомление для {self.user.name}: {self.notification_type}"
 
@@ -148,6 +212,10 @@ class Statistics(models.Model):
   date = models.DateField(verbose_name='Дата')
   user_count = models.IntegerField(verbose_name='Пользователи')
   advertisement_count = models.IntegerField(verbose_name='Объявления')
+
+  class Meta:
+        verbose_name = "Статистика"  
+        verbose_name_plural = "Статистика" 
 
   def __str__(self):
       return f"Статистика на {self.date}: Пользователи - {self.user_count}, Объявления - {self.advertisement_count}"
